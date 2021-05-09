@@ -1,0 +1,47 @@
+version: "3.4"
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  skynet:
+    driver: bridge
+
+services:
+  journi:
+    hostname: journi
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["node", "dist/app.production.js"]
+    volumes:
+      - ./server:/usr/journi
+      - /usr/journi/node_modules
+    ports:
+      - "5000:5000"
+    # env_file:
+    #   - journi/.development.env
+    networks:
+      - skynet
+    # deploy:
+    #   replicas: 1
+
+  redis:
+    hostname: redis
+    image: bitnami/redis:latest
+    environment:
+      # ALLOW_EMPTY_PASSWORD is recommended only for development.
+      - ALLOW_EMPTY_PASSWORD=no
+      - REDIS_PASSWORD=Tqz5oOJyUXA3YSglr0UUQpCge23FijBI
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL,CONFIG
+    command: /opt/bitnami/scripts/redis/run.sh --maxmemory 100mb
+    networks:
+      - skynet
+    ports:
+      - target: 6379
+        published: 6379
+        protocol: tcp
+        mode: ingress
+    volumes:
+      - ./containers-data/redis:/data
